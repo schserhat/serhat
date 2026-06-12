@@ -29,6 +29,22 @@ jobs:
         cd frontend
         npm install
 
+    - name: Hatalı Açılış Ekranı Ayarlarını Temizle
+      run: |
+        cd frontend
+        node -e "
+        const fs = require('fs');
+        if (fs.existsSync('app.json')) {
+          let app = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+          if (app.expo) {
+            delete app.expo.splash;
+            if (app.expo.android) delete app.expo.android.splash;
+            fs.writeFileSync('app.json', JSON.stringify(app, null, 2));
+            console.log('Splash ayarları derleme için geçici olarak temizlendi.');
+          }
+        }
+        "
+
     - name: Android Yapısını Oluştur (Expo Prebuild)
       run: |
         cd frontend
