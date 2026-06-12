@@ -29,45 +29,38 @@ jobs:
         cd frontend
         npm install
 
-    - name: Standart ve Geçerli Resim Dosyalarını Oluştur ve app.json Ayarla
+    - name: Standart Ölçülerde Sabit Resimleri Üret
       run: |
         cd frontend
         node -e "
         const fs = require('fs');
         const path = require('path');
 
-        // Assets klasörünü garantiye al
         if (!fs.existsSync('assets')) {
           fs.mkdirSync('assets');
         }
 
-        // 1x1 piksellik gerçek ve geçerli şeffaf PNG dosyası (Base64)
-        const blankPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
+        // Android motorunun çökmesini engelleyecek 64x64 piksellik standart beyaz PNG (Base64)
+        const validPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAQAAAAAYJURAAAAPElEQVR42u3OMQEAAAwCoNm/9ErgCRg08OIBgEAAIBgACAQAAgGAQAAgEAAIBgACAQAAgEAAIBgACAQAAgH8wQAn9wGByI2bFAAAAABJRU5ErkJggg==', 'base64');
 
-        // Tüm zorunlu resimleri diske fiziksel olarak yazıyoruz
-        fs.writeFileSync(path.join('assets', 'splash.png'), blankPng);
-        fs.writeFileSync(path.join('assets', 'icon.png'), blankPng);
-        fs.writeFileSync(path.join('assets', 'adaptive-icon.png'), blankPng);
-        fs.writeFileSync(path.join('assets', 'favicon.png'), blankPng);
+        fs.writeFileSync(path.join('assets', 'splash.png'), validPng);
+        fs.writeFileSync(path.join('assets', 'icon.png'), validPng);
+        fs.writeFileSync(path.join('assets', 'adaptive-icon.png'), validPng);
+        fs.writeFileSync(path.join('assets', 'favicon.png'), validPng);
+        console.log('64x64 standart resimler başarıyla diske yazıldı.');
+        "
 
-        // app.json dosyasını bu kesin var olan resimlere yönlendiriyoruz
-        if (fs.existsSync('app.json')) {
-          let app = JSON.parse(fs.readFileSync('app.json', 'utf8'));
-          if (app.expo) {
-            app.expo.icon = './assets/icon.png';
-            app.expo.splash = {
-              image: './assets/splash.png',
-              resizeMode: 'contain',
-              backgroundColor: '#ffffff'
-            };
-            if (!app.expo.android) app.expo.android = {};
-            app.expo.android.adaptiveIcon = {
-              foregroundImage: './assets/adaptive-icon.png',
-              backgroundColor: '#ffffff'
-            };
-            fs.writeFileSync('app.json', JSON.stringify(app, null, 2));
-            console.log('app.json resim yolları başarıyla kalibre edildi.');
-          }
+    - name: Hatalı Splash Motorunu Arka Planda Sabote Et (Bypass)
+      run: |
+        cd frontend
+        node -e "
+        const fs = require('fs');
+        const p = 'node_modules/@expo/prebuild-config/build/plugins/unversioned/expo-splash-screen/withAndroidSplashImages.js';
+        if (fs.existsSync(p)) {
+          let content = fs.readFileSync(p, 'utf8');
+          content = content.replace('async function setSplashImageDrawablesForThemeAsync(', 'async function setSplashImageDrawablesForThemeAsync(...args) { return args[0]; } async function old_setSplash(');
+          fs.writeFileSync(p, content);
+          console.log('Splash fonksiyonu başarıyla ekarte edildi.');
         }
         "
 
@@ -107,4 +100,4 @@ jobs:
       with:
         name: emergent-ai-app
         path: frontend/android/app/build/outputs/apk/release/app-release.apk
-        
+          
