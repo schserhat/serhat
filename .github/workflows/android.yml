@@ -1,0 +1,52 @@
+name: Android APK Build
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Kodu Klonla
+      uses: actions/checkout@v4
+
+    - name: Node.js Kur
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+
+    - name: Java JDK Ayarla
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Bağımlılıkları Kur (Frontend)
+      run: |
+        cd frontend
+        npm install
+
+    - name: Android Yapısını Oluştur (Expo Prebuild)
+      run: |
+        cd frontend
+        npx expo prebuild --platform android --skip-dependency-validation
+
+    - name: Gradle Yetkilerini Düzenle
+      run: |
+        cd frontend/android
+        chmod +x gradlew
+
+    - name: APK Derle (Debug)
+      run: |
+        cd frontend/android
+        ./gradlew assembleDebug
+
+    - name: APK Dosyasını Çıktı Olarak Al
+      uses: actions/upload-artifact@v4
+      with:
+        name: emergent-ai-app
+        path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
+        
