@@ -29,45 +29,33 @@ jobs:
         cd frontend
         npm install
 
-    - name: Standart Logo Üret ve Riskli Ayarları Temizle
+    - name: Tüm Asset Tanımlarını Temizle (Jimp Bypass)
       run: |
         cd frontend
         node -e "
         const fs = require('fs');
-        const path = require('path');
-
-        if (!fs.existsSync('assets')) {
-          fs.mkdirSync('assets');
-        }
-
-        // Sadece ana uygulama logosu için standart bir görsel bırakıyoruz
-        const validPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAQAAAAAYJURAAAAPElEQVR42u3OMQEAAAwCoNm/9ErgCRg08OIBgEAAIBgACAQAAgGAQAAgEAAIBgACAQAAgEAAIBgACAQAAgH8wQAn9wGByI2bFAAAAABJRU5ErkJggg==', 'base64');
-        fs.writeFileSync(path.join('assets', 'icon.png'), validPng);
-
         if (fs.existsSync('app.json')) {
           let app = JSON.parse(fs.readFileSync('app.json', 'utf8'));
           if (app.expo) {
-            // Hata veren splash ekranı ayarlarını kökten siliyoruz
+            // Jimp motorunu tetikleyen tüm özel resim referanslarını siliyoruz
+            delete app.expo.icon;
             delete app.expo.splash;
             
             if (app.expo.android) {
               delete app.expo.android.splash;
-              delete app.expo.android.adaptiveIcon; // Karmaşık ikon katmanlarını iptal et
+              delete app.expo.android.adaptiveIcon;
+              delete app.expo.android.icon;
             }
             
-            // Logoyu garantiye aldığımız dosyaya yönlendiriyoruz
-            app.expo.icon = './assets/icon.png';
-
-            // Eklenti listesinden splash eklentisini temizle
             if (app.expo.plugins) {
               app.expo.plugins = app.expo.plugins.filter(p => {
                 const name = typeof p === 'string' ? p : (Array.isArray(p) ? p[0] : '');
-                return !name.includes('splash');
+                return !name.includes('splash') && !name.includes('icon');
               });
             }
           }
           fs.writeFileSync('app.json', JSON.stringify(app, null, 2));
-          console.log('Ayar dosyası başarıyla sterilize edildi.');
+          console.log('app.json asset bağımlılıklarından tamamen arındırıldı.');
         }
         "
 
