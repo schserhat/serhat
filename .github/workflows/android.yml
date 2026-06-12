@@ -29,7 +29,7 @@ jobs:
         cd frontend
         npm install
 
-    - name: Hatalı Splash Eklentisini Kökten Kaldır (Bypass)
+    - name: Hatalı Splash Eklentisini Kaldır ve Sürümü Hazırla
       run: |
         cd frontend
         npm uninstall expo-splash-screen
@@ -53,25 +53,35 @@ jobs:
         cd frontend
         npx expo prebuild --platform android
 
-    - name: JS Kodlarını APK İçine Göm (Offline Bundle)
+    - name: APK'yı Çevrimdışı ve Yüklenebilir Hale Getir (Signing Config)
       run: |
         cd frontend
-        mkdir -p android/app/src/main/assets
-        npx react-native bundle --platform android --dev false --entry-file node_modules/expo/AppEntry.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res || npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
+        node -e "
+        const fs = require('fs');
+        const path = 'android/app/build.gradle';
+        if (fs.existsSync(path)) {
+          let content = fs.readFileSync(path, 'utf8');
+          if (content.includes('release {') && !content.includes('signingConfig signingConfigs.debug')) {
+            content = content.replace('release {', 'release {\n        signingConfig signingConfigs.debug');
+            fs.writeFileSync(path, content);
+            console.log('İmza ayarı başarıyla enjekte edildi.');
+          }
+        }
+        "
 
     - name: Gradle Yetkilerini Düzenle
       run: |
         cd frontend/android
         chmod +x gradlew
 
-    - name: APK Derle (Debug)
+    - name: APK Derle (Release - Çevrimdışı Standalone Mod)
       run: |
         cd frontend/android
-        ./gradlew assembleDebug
+        ./gradlew assembleRelease
 
     - name: APK Dosyasını Çıktı Olarak Al
       uses: actions/upload-artifact@v4
       with:
         name: emergent-ai-app
-        path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
+        path: frontend/android/app/build/outputs/apk/release/app-release.apk
         
