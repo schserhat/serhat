@@ -81,10 +81,10 @@ def _extract_username(value: str) -> Optional[str]:
         return None
     m = USERNAME_RE.search(value)
     if m:
-        return m.group(1)
+        return m.group(1).lower()
     # Bare username (no @)
     if re.fullmatch(r"[A-Za-z0-9_.]+", value):
-        return value
+        return value.lower()
     return None
 
 
@@ -119,15 +119,22 @@ def _normalize_video(d: Dict[str, Any]) -> MediaItem:
 async def _tikwm_get(path: str, params: Dict[str, Any]) -> Dict[str, Any]:
     url = f"{TIKWM_BASE}{path}"
     async with httpx.AsyncClient(timeout=HTTP_TIMEOUT, follow_redirects=True) as client:
-        r = await client.get(url, params=params, headers={
-            "User-Agent": "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile",
-            "Accept": "application/json",
-        })
-        r.raise_for_status()
-        data = r.json()
+        try:
+            r = await client.get(url, params=params, headers={
+                "User-Agent": "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile",
+                "Accept": "application/json",
+            })
+            r.raise_for_status()
+            data = r.json()
+        except httpx.HTTPError as e:
+            # Network / DNS / transport-level problems. Use 422 so the JSON body
+            # survives Cloudflare-style edge gateways (which strip 502 bodies).
+            raise HTTPException(status_code=422, detail=f"network: {e}")
     if data.get("code") != 0:
         msg = data.get("msg") or "tikwm error"
-        raise HTTPException(status_code=502, detail=f"upstream: {msg}")
+        # tikwm uses code != 0 for "no such user", "url parse failed", rate limit,
+        # etc. — these are business / client errors, not gateway errors.
+        raise HTTPException(status_code=422, detail=f"upstream: {msg}")
     return data.get("data") or {}
 
 
@@ -141,10 +148,7 @@ async def root():
 @api_router.post("/tt/resolve", response_model=MediaItem)
 async def resolve_url(body: ResolveRequest):
     """Resolve a single TikTok URL (video or photo post) into a MediaItem."""
-    try:
-        data = await _tikwm_get("/api/", {"url": body.url, "hd": 1 if body.hd else 0})
-    except httpx.HTTPError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+    data = await _tikwm_get("/api/", {"url": body.url, "hd": 1 if body.hd else 0})
     return _normalize_video(data)
 
 
@@ -153,14 +157,11 @@ async def user_info(unique_id: str = Query(..., description="@handle or bare use
     uid = _extract_username(unique_id)
     if not uid:
         raise HTTPException(status_code=400, detail="invalid username")
-    try:
-        data = await _tikwm_get("/api/user/info", {"unique_id": uid})
-    except httpx.HTTPError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+    data = await _tikwm_get("/api/user/info", {"unique_id": uid})
     user = (data.get("user") or {})
     stats = (data.get("stats") or {})
     return UserInfo(
-        unique_id=user.get("uniqueId") or uid,
+        unique_id=(user.get("uniqueId") or uid).lower(),
         nickname=user.get("nickname"),
         avatar=user.get("avatarLarger") or user.get("avatarMedium") or user.get("avatarThumb"),
         signature=user.get("signature"),
@@ -179,14 +180,11 @@ async def user_posts(
     uid = _extract_username(unique_id)
     if not uid:
         raise HTTPException(status_code=400, detail="invalid username")
-    try:
-        data = await _tikwm_get("/api/user/posts", {
-            "unique_id": uid,
-            "count": count,
-            "cursor": cursor,
-        })
-    except httpx.HTTPError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+    data = await _tikwm_get("/api/user/posts", {
+        "unique_id": uid,
+        "count": count,
+        "cursor": cursor,
+    })
     raw_items = data.get("videos") or []
     items = [_normalize_video(v) for v in raw_items]
     return PostsResponse(
