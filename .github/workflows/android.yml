@@ -66,34 +66,25 @@ jobs:
         cd frontend
         npx expo prebuild --platform android
 
-    - name: APK'yı Çevrimdışı ve Yüklenebilir Hale Getir (Signing Config)
+    - name: JS Kodlarını APK İçine Mühürle (Expo Official Embed)
       run: |
         cd frontend
-        node -e "
-        const fs = require('fs');
-        const path = 'android/app/build.gradle';
-        if (fs.existsSync(path)) {
-          let content = fs.readFileSync(path, 'utf8');
-          if (content.includes('release {') && !content.includes('signingConfig signingConfigs.debug')) {
-            content = content.replace('release {', 'release {\n        signingConfig signingConfigs.debug');
-            fs.writeFileSync(path, content);
-          }
-        }
-        "
+        mkdir -p android/app/src/main/assets
+        npx expo export:embed --platform android --dev false --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
 
     - name: Gradle Yetkilerini Düzenle
       run: |
         cd frontend/android
         chmod +x gradlew
 
-    - name: APK Derle (Release Standalone Mod)
+    - name: APK Derle (Debug Standalone Mod)
       run: |
         cd frontend/android
-        ./gradlew assembleRelease
+        ./gradlew assembleDebug
 
     - name: APK Dosyasını Çıktı Olarak Al
       uses: actions/upload-artifact@v4
       with:
         name: emergent-ai-app
-        path: frontend/android/app/build/outputs/apk/release/app-release.apk
+        path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
         
