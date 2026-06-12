@@ -29,7 +29,7 @@ jobs:
         cd frontend
         npm install
 
-    - name: Standart Ölçülerde Sabit Resimleri Üret
+    - name: Standart Logo Üret ve Riskli Ayarları Temizle
       run: |
         cd frontend
         node -e "
@@ -40,12 +40,35 @@ jobs:
           fs.mkdirSync('assets');
         }
 
+        // Sadece ana uygulama logosu için standart bir görsel bırakıyoruz
         const validPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAQAAAAAYJURAAAAPElEQVR42u3OMQEAAAwCoNm/9ErgCRg08OIBgEAAIBgACAQAAgGAQAAgEAAIBgACAQAAgEAAIBgACAQAAgH8wQAn9wGByI2bFAAAAABJRU5ErkJggg==', 'base64');
-
-        fs.writeFileSync(path.join('assets', 'splash.png'), validPng);
         fs.writeFileSync(path.join('assets', 'icon.png'), validPng);
-        fs.writeFileSync(path.join('assets', 'adaptive-icon.png'), validPng);
-        fs.writeFileSync(path.join('assets', 'favicon.png'), validPng);
+
+        if (fs.existsSync('app.json')) {
+          let app = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+          if (app.expo) {
+            // Hata veren splash ekranı ayarlarını kökten siliyoruz
+            delete app.expo.splash;
+            
+            if (app.expo.android) {
+              delete app.expo.android.splash;
+              delete app.expo.android.adaptiveIcon; // Karmaşık ikon katmanlarını iptal et
+            }
+            
+            // Logoyu garantiye aldığımız dosyaya yönlendiriyoruz
+            app.expo.icon = './assets/icon.png';
+
+            // Eklenti listesinden splash eklentisini temizle
+            if (app.expo.plugins) {
+              app.expo.plugins = app.expo.plugins.filter(p => {
+                const name = typeof p === 'string' ? p : (Array.isArray(p) ? p[0] : '');
+                return !name.includes('splash');
+              });
+            }
+          }
+          fs.writeFileSync('app.json', JSON.stringify(app, null, 2));
+          console.log('Ayar dosyası başarıyla sterilize edildi.');
+        }
         "
 
     - name: Android Yapısını Oluştur (Expo Prebuild)
