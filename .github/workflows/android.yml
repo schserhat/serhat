@@ -37,16 +37,13 @@ jobs:
         if (fs.existsSync('app.json')) {
           let app = JSON.parse(fs.readFileSync('app.json', 'utf8'));
           if (app.expo) {
-            // Jimp motorunu tetikleyen tüm özel resim referanslarını siliyoruz
             delete app.expo.icon;
             delete app.expo.splash;
-            
             if (app.expo.android) {
               delete app.expo.android.splash;
               delete app.expo.android.adaptiveIcon;
               delete app.expo.android.icon;
             }
-            
             if (app.expo.plugins) {
               app.expo.plugins = app.expo.plugins.filter(p => {
                 const name = typeof p === 'string' ? p : (Array.isArray(p) ? p[0] : '');
@@ -55,34 +52,48 @@ jobs:
             }
           }
           fs.writeFileSync('app.json', JSON.stringify(app, null, 2));
-          console.log('app.json asset bağımlılıklarından tamamen arındırıldı.');
         }
         "
+
+    - name: Metro Konfigürasyonunu Sıfırla (Metro Crash Bypass)
+      run: |
+        cd frontend
+        echo "const { getDefaultConfig } = require('expo/metro-config');" > metro.config.js
+        echo "module.exports = getDefaultConfig(__dirname);" >> metro.config.js
 
     - name: Android Yapısını Oluştur (Expo Prebuild)
       run: |
         cd frontend
         npx expo prebuild --platform android
 
-    - name: JS Kodlarını APK İçine Mühürle (Expo Official Embed)
+    - name: APK'yı Çevrimdışı ve Yüklenebilir Hale Getir (Signing Config)
       run: |
         cd frontend
-        mkdir -p android/app/src/main/assets
-        npx expo export:embed --platform android --dev false --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
+        node -e "
+        const fs = require('fs');
+        const path = 'android/app/build.gradle';
+        if (fs.existsSync(path)) {
+          let content = fs.readFileSync(path, 'utf8');
+          if (content.includes('release {') && !content.includes('signingConfig signingConfigs.debug')) {
+            content = content.replace('release {', 'release {\n        signingConfig signingConfigs.debug');
+            fs.writeFileSync(path, content);
+          }
+        }
+        "
 
     - name: Gradle Yetkilerini Düzenle
       run: |
         cd frontend/android
         chmod +x gradlew
 
-    - name: APK Derle (Debug Standalone Mod)
+    - name: APK Derle (Release Standalone Mod)
       run: |
         cd frontend/android
-        ./gradlew assembleDebug
+        ./gradlew assembleRelease
 
     - name: APK Dosyasını Çıktı Olarak Al
       uses: actions/upload-artifact@v4
       with:
         name: emergent-ai-app
-        path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
+        path: frontend/android/app/build/outputs/apk/release/app-release.apk
         
