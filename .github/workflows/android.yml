@@ -32,7 +32,7 @@ jobs:
     - name: Android Yapısını Oluştur (Expo Prebuild)
       run: |
         cd frontend
-        npx expo prebuild --platform android --skip-dependency-validation
+        npx expo prebuild --platform android
 
     - name: Gradle Yetkilerini Düzenle
       run: |
