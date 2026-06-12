@@ -74,10 +74,10 @@ jobs:
         const file = 'android/app/build.gradle';
         if (fs.existsSync(file)) {
           let content = fs.readFileSync(file, 'utf8');
-          // Mevcut kod bloklarına dokunmadan en alta temizce ekliyoruz
-          content += '\n\nreact {\n    debugableVariants = []\n}\n';
+          // Harf hatası düzeltildi: debuggableVariants (çift g)
+          content += '\n\nreact {\n    debuggableVariants = []\n}\n';
           fs.writeFileSync(file, content);
-          console.log('Mühürleme ayarı güvenli şekilde dosya sonuna eklendi.');
+          console.log('Mühürleme ayarı çift g ile başarıyla düzeltildi.');
         }
         "
 
