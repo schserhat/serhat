@@ -29,7 +29,7 @@ jobs:
         cd frontend
         npm install
 
-    - name: Tüm Asset Tanımlarını Temizle (Jimp Bypass)
+    - name: Tüm Asset Tanimleri Temizle (Jimp Bypass)
       run: |
         cd frontend
         node -e "
@@ -55,7 +55,7 @@ jobs:
         }
         "
 
-    - name: Metro Konfigürasyonunu Sıfırla (Metro Crash Bypass)
+    - name: Metro Konfigürasyonunu Standart Hale Getir
       run: |
         cd frontend
         echo "const { getDefaultConfig } = require('expo/metro-config');" > metro.config.js
@@ -66,11 +66,23 @@ jobs:
         cd frontend
         npx expo prebuild --platform android
 
-    - name: JS Kodlarını APK İçine Mühürle (Expo Official Embed)
+    - name: Debug Modunda Kod Gömmeyi Zorunlu Kil
       run: |
         cd frontend
-        mkdir -p android/app/src/main/assets
-        npx expo export:embed --platform android --dev false --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
+        node -e "
+        const fs = require('fs');
+        const path = 'android/app/build.gradle';
+        if (fs.existsSync(path)) {
+          let content = fs.readFileSync(path, 'utf8');
+          if (content.includes('react {')) {
+            content = content.replace('react {', 'react {\n    bundleInDebug = true\n');
+          } else {
+            content = 'project.ext.react = [ bundleInDebug: true ]\n' + content;
+          }
+          fs.writeFileSync(path, content);
+          console.log('Çevrimdışı paketleme ayarı Android kalbine enjekte edildi.');
+        }
+        "
 
     - name: Gradle Yetkilerini Düzenle
       run: |
