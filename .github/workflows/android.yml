@@ -29,22 +29,17 @@ jobs:
         cd frontend
         npm install
 
-    - name: Hatalı Splash Eklentisini Kaldır ve Sürümü Hazırla
+    - name: Hatalı Splash Motorunu Sabote Et (Bypass)
       run: |
         cd frontend
-        npm uninstall expo-splash-screen
         node -e "
         const fs = require('fs');
-        if (fs.existsSync('app.json')) {
-          let app = JSON.parse(fs.readFileSync('app.json', 'utf8'));
-          if (app.expo) {
-            delete app.expo.splash;
-            if (app.expo.android) delete app.expo.android.splash;
-            if (app.expo.plugins) {
-              app.expo.plugins = app.expo.plugins.filter(p => String(p).indexOf('splash') === -1);
-            }
-          }
-          fs.writeFileSync('app.json', JSON.stringify(app, null, 2));
+        const p = 'node_modules/@expo/prebuild-config/build/plugins/unversioned/expo-splash-screen/withAndroidSplashImages.js';
+        if (fs.existsSync(p)) {
+          let content = fs.readFileSync(p, 'utf8');
+          content = content.replace('async function setSplashImageDrawablesForThemeAsync(', 'async function setSplashImageDrawablesForThemeAsync(...args) { return args[0]; } async function old_setSplash(');
+          fs.writeFileSync(p, content);
+          console.log('Splash fonksiyonu başarıyla etkisiz hale getirildi.');
         }
         "
 
@@ -74,7 +69,7 @@ jobs:
         cd frontend/android
         chmod +x gradlew
 
-    - name: APK Derle (Release - Çevrimdışı Standalone Mod)
+    - name: APK Derle (Release Standalone Mod)
       run: |
         cd frontend/android
         ./gradlew assembleRelease
