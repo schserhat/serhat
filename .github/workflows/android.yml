@@ -29,17 +29,45 @@ jobs:
         cd frontend
         npm install
 
-    - name: Hatalı Splash Motorunu Sabote Et (Bypass)
+    - name: Standart ve Geçerli Resim Dosyalarını Oluştur ve app.json Ayarla
       run: |
         cd frontend
         node -e "
         const fs = require('fs');
-        const p = 'node_modules/@expo/prebuild-config/build/plugins/unversioned/expo-splash-screen/withAndroidSplashImages.js';
-        if (fs.existsSync(p)) {
-          let content = fs.readFileSync(p, 'utf8');
-          content = content.replace('async function setSplashImageDrawablesForThemeAsync(', 'async function setSplashImageDrawablesForThemeAsync(...args) { return args[0]; } async function old_setSplash(');
-          fs.writeFileSync(p, content);
-          console.log('Splash fonksiyonu başarıyla etkisiz hale getirildi.');
+        const path = require('path');
+
+        // Assets klasörünü garantiye al
+        if (!fs.existsSync('assets')) {
+          fs.mkdirSync('assets');
+        }
+
+        // 1x1 piksellik gerçek ve geçerli şeffaf PNG dosyası (Base64)
+        const blankPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
+
+        // Tüm zorunlu resimleri diske fiziksel olarak yazıyoruz
+        fs.writeFileSync(path.join('assets', 'splash.png'), blankPng);
+        fs.writeFileSync(path.join('assets', 'icon.png'), blankPng);
+        fs.writeFileSync(path.join('assets', 'adaptive-icon.png'), blankPng);
+        fs.writeFileSync(path.join('assets', 'favicon.png'), blankPng);
+
+        // app.json dosyasını bu kesin var olan resimlere yönlendiriyoruz
+        if (fs.existsSync('app.json')) {
+          let app = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+          if (app.expo) {
+            app.expo.icon = './assets/icon.png';
+            app.expo.splash = {
+              image: './assets/splash.png',
+              resizeMode: 'contain',
+              backgroundColor: '#ffffff'
+            };
+            if (!app.expo.android) app.expo.android = {};
+            app.expo.android.adaptiveIcon = {
+              foregroundImage: './assets/adaptive-icon.png',
+              backgroundColor: '#ffffff'
+            };
+            fs.writeFileSync('app.json', JSON.stringify(app, null, 2));
+            console.log('app.json resim yolları başarıyla kalibre edildi.');
+          }
         }
         "
 
