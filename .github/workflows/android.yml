@@ -29,7 +29,7 @@ jobs:
         cd frontend
         npm install
 
-    - name: Tüm Asset Tanimleri Temizle (Jimp Bypass)
+    - name: Tüm Asset Tanımlarını Temizle (Jimp Bypass)
       run: |
         cd frontend
         node -e "
@@ -66,21 +66,18 @@ jobs:
         cd frontend
         npx expo prebuild --platform android
 
-    - name: Debug Modunda Kod Gömmeyi Zorunlu Kil
+    - name: Debug Modunda Otomatik Kod Gömmeyi Etkinleştir
       run: |
         cd frontend
         node -e "
         const fs = require('fs');
-        const path = 'android/app/build.gradle';
-        if (fs.existsSync(path)) {
-          let content = fs.readFileSync(path, 'utf8');
-          if (content.includes('react {')) {
-            content = content.replace('react {', 'react {\n    bundleInDebug = true\n');
-          } else {
-            content = 'project.ext.react = [ bundleInDebug: true ]\n' + content;
-          }
-          fs.writeFileSync(path, content);
-          console.log('Çevrimdışı paketleme ayarı Android kalbine enjekte edildi.');
+        const file = 'android/app/build.gradle';
+        if (fs.existsSync(file)) {
+          let content = fs.readFileSync(file, 'utf8');
+          // Mevcut kod bloklarına dokunmadan en alta temizce ekliyoruz
+          content += '\n\nreact {\n    debugableVariants = []\n}\n';
+          fs.writeFileSync(file, content);
+          console.log('Mühürleme ayarı güvenli şekilde dosya sonuna eklendi.');
         }
         "
 
