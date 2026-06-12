@@ -1,0 +1,53 @@
+{
+  "summary": "Backend-only testing of the TikTok Downloader FastAPI proxy. All 11 pytest cases passed against the public EXPO_PUBLIC_BACKEND_URL. Health, user info, user posts (incl. pagination cursor + no-overlap), HD resolve, and username-extraction variants (@tiktok, tiktok, https URL) all work. Found one CRITICAL infra-level issue: backend's 502 JSON error bodies (used for tikwm upstream failures) are rewritten by the Kubernetes/Cloudflare ingress to a Cloudflare HTML '502 Bad gateway' page, so the mobile app cannot read the `detail` field when tikwm rejects a request (invalid user, bad URL, rate-limit).",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "ALL endpoints that raise HTTPException(502, ...)",
+        "issue": "Backend returns 502 with JSON {detail: 'upstream: ...'} for tikwm errors (invalid username, invalid URL, rate-limit). The k8s/Cloudflare ingress treats any 5xx from the upstream as a gateway failure and REPLACES the body with its own HTML error page (`<title>preview.emergentagent.com | 502: Bad gateway</title>`). Verified by comparing `curl http://localhost:8001` (JSON detail) vs `curl https://tik-archive-1.preview.emergentagent.com` (HTML). Mobile app will not be able to display the upstream error message — it will get unparseable HTML. Fix: in server.py `_tikwm_get` and the `except httpx.HTTPError` blocks, map upstream rejections to a 4xx status (e.g., 400 or 422 'Upstream rejected: <msg>') so the JSON body passes through the ingress. Reference: /app/backend/server.py:130,147,159,189.",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": [
+      {
+        "endpoint": "GET /api/tt/user/info, /api/tt/user/posts",
+        "issue": "`_extract_username` does not normalize case. tikwm is case-insensitive but storing the user-provided casing in saved profile shortcuts may produce duplicate-looking entries (e.g., '@TikTok' vs '@tiktok'). Consider .lower() before returning. Reference: /app/backend/server.py:77-88."
+      },
+      {
+        "endpoint": "GET /api/tt/user/posts",
+        "issue": "`count` clamp is `ge=1, le=35` but tikwm's documented hard limit is 35. The PRD's example uses count=30 — current bounds are fine, just calling out that requesting >35 returns FastAPI 422, not a friendlier error. Reference: /app/backend/server.py:177."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_tiktok_proxy.py",
+    "/app/backend/tests/conftest.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Change upstream-error status from 502 to 400/422 in server.py (`_tikwm_get` and the two `except httpx.HTTPError` blocks). This keeps the JSON detail readable by the mobile app behind the Cloudflare ingress.",
+    "Lowercase the extracted username before returning to avoid duplicate saved-profile shortcuts.",
+    "(Optional) Add a small in-memory TTL cache around `_tikwm_get` for user/info + first page of user/posts to reduce tikwm rate-limit pressure during bulk-download flows."
+  ],
+  "critical_code_review_comments": [
+    "server.py uses status 502 for business-logic failures from tikwm — this collides with Cloudflare/k8s ingress error pages and hides the JSON detail from clients. Use 4xx for 'upstream-rejected' cases (e.g., 400 invalid_user/invalid_url, 422 url_parse_failed) and reserve 502/504 strictly for true network/timeout errors that the user cannot fix.",
+    "No retry/backoff around tikwm calls — tikwm rate-limits aggressively (~1 req/sec). Consider one automatic retry with 1s sleep on `code != 0` with msg containing 'frequency' / 'rate'.",
+    "Good: env vars used correctly, async httpx with timeout, Pydantic models, CORS configured, /api prefix preserved, no MongoDB _id leaks (no DB usage), no hardcoded URLs."
+  ],
+  "updated_files": [
+    "/app/backend/tests/conftest.py (new)",
+    "/app/backend/tests/test_tiktok_proxy.py (new)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "n/a (skipped per request)"},
+  "seed_data_creation": "None — backend is stateless proxy, no DB.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All 11 pytest cases live in /app/backend/tests/test_tiktok_proxy.py and use EXPO_PUBLIC_BACKEND_URL from /app/frontend/.env via conftest.py fallback. Re-run with `pytest /app/backend/tests/ -v`. Note: tikwm rate-limits so the test_user_posts_pagination test sleeps 1s between pages and includes one auto-retry on 502 in the `_get/_post` helpers. The two error-path tests (invalid_user, invalid_url) currently assert ONLY on status code at the public URL because the ingress strips JSON bodies for 5xx — if/when the main agent switches upstream errors to 4xx, the JSON-body asserts inside those tests will start exercising real JSON instead of being skipped, so they remain valid as-is.",
+  "rca_of_issue": "RCA — '502 with detail' not reaching the client: 1) backend raises HTTPException(502, detail='upstream: <msg>') when tikwm returns code!=0 or httpx errors. 2) Direct call to http://localhost:8001 returns the JSON body correctly (verified). 3) Same call through https://tik-archive-1.preview.emergentagent.com returns Cloudflare's own HTML '502 Bad gateway' page — the ingress intercepts upstream 5xx and replaces the body. 4) Mitigation: emit 4xx (400 invalid input / 422 unprocessable upstream) for business-logic failures so the ingress passes the JSON body through. Reproduce: `curl -s -o /dev/null -w '%{http_code} %{content_type}\\n' 'https://tik-archive-1.preview.emergentagent.com/api/tt/user/info?unique_id=invalid_user_xxx_yyy'` → `502 text/html`."
+}
