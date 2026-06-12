@@ -13,10 +13,10 @@ jobs:
     - name: Kodu Klonla
       uses: actions/checkout@v4
 
-    - name: Node.js Kur
+    - name: Node.js Kur (Sürüm 20'ye Yükseltildi)
       uses: actions/setup-node@v4
       with:
-        node-version: 18
+        node-version: 20
 
     - name: Java JDK Ayarla
       uses: actions/setup-java@v4
@@ -74,10 +74,9 @@ jobs:
         const file = 'android/app/build.gradle';
         if (fs.existsSync(file)) {
           let content = fs.readFileSync(file, 'utf8');
-          // Harf hatası düzeltildi: debuggableVariants (çift g)
           content += '\n\nreact {\n    debuggableVariants = []\n}\n';
           fs.writeFileSync(file, content);
-          console.log('Mühürleme ayarı çift g ile başarıyla düzeltildi.');
+          console.log('Mühürleme ayarı başarıyla dosya sonuna eklendi.');
         }
         "
 
