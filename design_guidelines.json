@@ -1,0 +1,100 @@
+{
+  "theme": "dark",
+  "archetype": "2_performance_pro",
+  "colors": {
+    "background": "#0A0A0A",
+    "surface": "#141414",
+    "surface_elevated": "#1E1E1E",
+    "primary": "#007AFF",
+    "primary_hover": "#3B82F6",
+    "text_main": "#FFFFFF",
+    "text_muted": "#A1A1AA",
+    "border": "#27272A",
+    "success": "#10B981",
+    "error": "#EF4444"
+  },
+  "typography": {
+    "heading_font": "Manrope",
+    "body_font": "Inter",
+    "hierarchy": {
+      "h1": "text-3xl font-black tracking-tight",
+      "h2": "text-xl font-bold tracking-tight",
+      "body": "text-sm font-medium",
+      "caption": "text-xs font-medium text-muted uppercase tracking-widest"
+    }
+  },
+  "spacing": {
+    "container": "p-4",
+    "grid_gap": "gap-2",
+    "grid_gap_tight": "gap-[2px]",
+    "section_gap": "gap-6"
+  },
+  "components": {
+    "input_area": {
+      "style": "bg-surface border border-border rounded-xl p-4 flex flex-col gap-3",
+      "button": "bg-primary text-white font-bold rounded-lg py-3 px-4 flex items-center justify-center gap-2",
+      "testid": "url-input-container"
+    },
+    "profile_shortcut_card": {
+      "style": "bg-surface border border-border rounded-xl p-3 flex items-center gap-3 active:scale-95 transition-transform",
+      "avatar": "w-12 h-12 rounded-full object-cover border border-border",
+      "badge": "absolute -top-1 -right-1 bg-primary w-3 h-3 rounded-full border-2 border-background",
+      "testid": "profile-shortcut-card"
+    },
+    "media_grid_item": {
+      "style": "relative aspect-[9/16] bg-surface rounded-md overflow-hidden border border-border",
+      "image": "w-full h-full object-cover",
+      "overlay": "absolute inset-0 bg-black/20",
+      "checkbox": "absolute top-2 right-2 w-5 h-5 rounded border-2 border-white/50 bg-black/50 checked:bg-primary checked:border-primary",
+      "badge": "absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1",
+      "downloaded_overlay": "absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]",
+      "downloaded_icon": "text-success w-8 h-8",
+      "testid": "media-grid-item"
+    },
+    "fab": {
+      "style": "fixed bottom-6 left-1/2 -translate-x-1/2 bg-primary text-white rounded-full px-6 py-3 shadow-[0_0_24px_rgba(0,122,255,0.4)] flex items-center gap-2 font-bold z-50",
+      "testid": "batch-download-fab"
+    },
+    "progress_bar": {
+      "container": "h-2 w-full bg-surface_elevated rounded-full overflow-hidden",
+      "fill": "h-full bg-primary transition-all duration-300",
+      "testid": "download-progress-bar"
+    },
+    "bottom_tab_navigator": {
+      "style": "bg-surface border-t border-border flex justify-around items-center h-16 pb-safe",
+      "item": "flex flex-col items-center justify-center w-full h-full gap-1",
+      "icon_active": "text-primary",
+      "icon_inactive": "text-text_muted",
+      "testid": "bottom-tab-nav"
+    }
+  },
+  "layout": {
+    "media_grid": "grid grid-cols-3 gap-[2px]",
+    "profiles_grid": "grid grid-cols-2 gap-3"
+  },
+  "assets": {
+    "avatars": [
+      "https://images.unsplash.com/photo-1740252117070-7aa2955b25f8?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODl8MHwxfHNlYXJjaHwxfHxwcm9maWxlJTIwYXZhdGFyJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzgxMjcwMjU1fDA&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1740252117013-4fb21771e7ca?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODl8MHwxfHNlYXJjaHwyfHxwcm9maWxlJTIwYXZhdGFyJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzgxMjcwMjU1fDA&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1581841064838-a470c740e8ee?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODl8MHwxfHNlYXJjaHw0fHxwcm9maWxlJTIwYXZhdGFyJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzgxMjcwMjU1fDA&ixlib=rb-4.1.0&q=85",
+      "https://images.pexels.com/photos/15875169/pexels-photo-15875169.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+    ],
+    "media_thumbnails": [
+      "https://images.unsplash.com/photo-1647346835602-9867b8ff62f1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDR8MHwxfHNlYXJjaHw0fHx2ZXJ0aWNhbCUyMGxpZmVzdHlsZSUyMHZpZGVvJTIwdGh1bWJuYWlsfGVufDB8fHx8MTc4MTI3MDI1NXww&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1772724317388-4d1d1cc45c09?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDR8MHwxfHNlYXJjaHwzfHx2ZXJ0aWNhbCUyMGxpZmVzdHlsZSUyMHZpZGVvJTIwdGh1bWJuYWlsfGVufDB8fHx8MTc4MTI3MDI1NXww&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1543319134-f871af34258d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDR8MHwxfHNlYXJjaHwyfHx2ZXJ0aWNhbCUyMGxpZmVzdHlsZSUyMHZpZGVvJTIwdGh1bWJuYWlsfGVufDB8fHx8MTc4MTI3MDI1NXww&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1726409724841-016b6f4f8b1b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDR8MHwxfHNlYXJjaHwxfHx2ZXJ0aWNhbCUyMGxpZmVzdHlsZSUyMHZpZGVvJTIwdGh1bWJuYWlsfGVufDB8fHx8MTc4MTI3MDI1NXww&ixlib=rb-4.1.0&q=85"
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Use Manrope for headings and Inter for body text.",
+    "Follow the Archetype 2 Performance Pro palette: Deep Obsidian (#0A0A0A) background with Electric Blue (#007AFF) accents for all primary actions. This ensures a tactical, high-visibility, fast utility look.",
+    "Implement a bottom tab navigator for Home, Profiles, Queue, Gallery, Settings. Maintain dark surface backgrounds with borders to avoid visual bleeding.",
+    "The media grid must use exactly 3 columns with a 9:16 aspect ratio (TikTok style) and very tight 2px gaps, matching the provided layout spec.",
+    "Ensure ALL interactive and key informational elements have a 'data-testid' attribute (e.g., data-testid='url-paste-button', data-testid='media-grid-item', data-testid='profile-shortcut-card').",
+    "For multi-select mode, show a checkbox on top right of each media item. If already downloaded, dim the thumbnail and show a success overlay with a check icon to avoid redundant downloads.",
+    "Use Phosphor Icons (regular weight) for all UI iconography.",
+    "The app must feel fast, dense, and avoid unnecessary paddings. Card internal padding should be p-3 max. Utilize the 'badge' component style for video type/length indicators on media thumbs.",
+    "Use safe area padding (e.g. pb-safe in Tailwind via native safe-area-context) since this is a mobile web app / Expo app."
+  ]
+}
