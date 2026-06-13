@@ -8,4 +8,4 @@ boto3
 requests
 httpx
 aiohttp
-
+python-dotenv
