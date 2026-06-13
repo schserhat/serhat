@@ -1,7 +1,7 @@
 // API client: talks to our FastAPI backend which proxies tikwm.com.
 import type { MediaItem, UserInfo } from "./types";
 
-const BASE = process.env.EXPO_PUBLIC_BACKEND_URL;
+const BASE = "https://serhat.onrender.com";
 
 if (!BASE) {
   // Fail fast — config error.
