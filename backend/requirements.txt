@@ -1,13 +1,11 @@
 fastapi
 uvicorn
 email-validator
-google-ai-generativelanguage
 google-generativeai
 bcrypt
 cryptography
 boto3
-botocore
 requests
 httpx
 aiohttp
-pydantic
+
